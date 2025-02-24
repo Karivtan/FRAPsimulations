@@ -151,7 +151,7 @@ public class FrapSimulation {
 			//fix compartment 0
 			ArrayList<FluorescentMolecule> ML= h.comps[0].fms;
 			for (int l=0;l<difright-difleft;l++) {
-				ML.add(new FluorescentMolecule());
+				ML.add(new FluorescentMolecule(0));
 			}
 			// fix end compartment
 			ML= h.comps[h.comps.length-1].fms;

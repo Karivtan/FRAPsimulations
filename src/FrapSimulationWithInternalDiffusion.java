@@ -2,8 +2,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
-
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -52,7 +50,7 @@ public class FrapSimulationWithInternalDiffusion {
 		JFileChooser ch = new JFileChooser();
 		ch.setDialogTitle("Choose where to store the data");
 		ch.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		File cDir=new File("E:/temp/frap");
+		File cDir=new File("C:\\Users\\willemsejj\\ownCloud - Joost Willemse@universiteitleiden.data.surfsara.nl (3)\\IBL_Streptomyces_cell_division (Projectfolder)\\Diffusion kinetics");
 		ch.setCurrentDirectory(cDir);
 		int doption = ch.showOpenDialog(null);
 		if (doption == JFileChooser.APPROVE_OPTION) {
@@ -147,10 +145,9 @@ public class FrapSimulationWithInternalDiffusion {
 				pw.println("sep=,");
 				pw2.println("sep=,");
 				
-				// #TODO add settings to file
 				pw.println("Number of molecules per compartment,"+nMols);
 				pw.println("Number of compartments,"+nComps);
-				pw.println("Number of subcompartments for analysis"+nSubComp);
+				pw.println("Number of subcompartments for analysis,"+nSubComp);
 				pw.println("Which compartment should be bleached (count starts at 0),"+(BleachedCompartment-1));
 				pw.println("Start position of bleach in the compartment (0-100),"+startB);
 				pw.println("End position of bleach in the compartment (0-100),"+endB);
@@ -203,24 +200,14 @@ public class FrapSimulationWithInternalDiffusion {
 			System.out.println(""+diffD);
 			//Only molecules that have been in the bleach area can be bleached, so we need to register max and min positions for every molecule
 			//So we let them diffuse first, and then bleach away nBleaches/100 percent of the molecules that are in the compartment
-			ArrayList<ArrayList<FluorescentMolecule>> toCheck=diffuseMolecules(CompartmentMolecules, nIttD, BleachedCompartment, difleft, difright);
-			ArrayList<FluorescentMolecule> toremove=toCheck.get(0);
+			ArrayList<FluorescentMolecule> toremove=diffuseMolecules(CompartmentMolecules, nIttD, BleachedCompartment, difleft, difright);
 			for (FluorescentMolecule deleting:toremove) {
 				CompartmentMolecules.remove(deleting);
 			}
-			ArrayList<FluorescentMolecule> toclean=toCheck.get(1);
 			//now we know where all molecules have moved around in the compartment
 			//Now we have the cleaned list without the ones that left the compartment
 			//Now we can bleach the molecules in the current compartment
-			for (int i=0;i<h.comps.length;i++) {
-				ArrayList<FluorescentMolecule> cm=h.comps[i].fms;
-				for (FluorescentMolecule delfm:toclean) {
-					if (cm.contains(delfm) && i!=BleachedCompartment) {
-						cm.remove(delfm);
-					}
-				}
-				//end up with a cleaned compartment list of molecules
-			}
+
 			ArrayList<FluorescentMolecule> toBleach = getBleachables(CompartmentMolecules,startB, endB);
 			//Make sure bleaching will not try to bleach more molecules then are currenty possible
 			if (nToBleach>toBleach.size()) {
@@ -237,25 +224,20 @@ public class FrapSimulationWithInternalDiffusion {
 			//After every nIttF we need to count the molecules per compartment
 			File fs = new File(f+"/"+title+".csv");
 			File fs2 = new File(f+"/"+title+"Split.csv");
-			File fs3 = new File(f+"/"+title+"Positions.csv");
 			int counter=1; 
 			while (fs.exists()) {
 				fs = new File(f+"/"+title+counter+".csv");
 				fs2 = new File(f+"/"+title+counter+"Split.csv");
-				fs3 = new File(f+"/"+title+counter+"Positions.csv");
 				counter++;
 			}
 			try {
 				PrintWriter pw = new PrintWriter(fs);
 				PrintWriter pw2 = new PrintWriter(fs2);
-				PrintWriter pw3 = new PrintWriter(fs3);
-				// #TODO add settings to file
 				pw.println("sep=,");
 				pw2.println("sep=,");
-				pw3.println("sep=,");
 				pw.println("Number of molecules per compartment,"+nMols);
 				pw.println("Number of compartments,"+nComps);
-				pw.println("Number of subcompartments for analysis"+nSubComp);
+				pw.println("Number of subcompartments for analysis,"+nSubComp);
 				pw.println("Which compartment should be bleached (count starts at 0),"+bleachedCompartment);
 				pw.println("Start position of bleach in the compartment (0-100),"+startB);
 				pw.println("End position of bleach in the compartment (0-100),"+endB);
@@ -280,9 +262,7 @@ public class FrapSimulationWithInternalDiffusion {
 						str2+="Compartment "+i+" Sub "+j + ", ";
 					}
 				}
-				
-				
-				
+
 				pw.println("Itteration, "+str);
 				pw2.println(str2);
 				
@@ -297,41 +277,23 @@ public class FrapSimulationWithInternalDiffusion {
 				jf.setSize(500,500);
 				jf.setVisible(true);
 				
-				for (int i=0;i<nItterations;i++) { 
+				for (int i=0;i<nItterations;i++) {
 					pb.setValue(i+1);
 					diffuseCycle(); 
-					for (int j=0;j<h.comps.length;j++) { // resets all the molecules to be able to diffuse for the next round
+/*					for (int j=0;j<h.comps.length;j++) { // resets all the molecules to be able to diffuse for the next round
 						ArrayList<FluorescentMolecule> fms =h.comps[j].fms;
 						for (FluorescentMolecule fm:fms) {
 							fm.diffused=false;
 						}
-					}
+					}*/
 					pw.print((i+1)+",");
 					MoleculeCounter(pw);
 					pw2.print((i+1)+",");
 					SplitCompartmentCounter(pw2,nSubComp);
-					/*
-					for (int j=0;j<h.comps.length;j++) {
-						System.out.print(h.comps[j].fms.size()+",");
-					}
-					System.out.println();*/
 				}
-/*for (int i=1;i<nComps+1;i++) {
-	ArrayList<FluorescentMolecule> fms = h.comps[i].fms;
-	pw3.println("Current compartment "+i);
-	for (FluorescentMolecule j :fms) {
-		pw3.println("Molecule"+ +fms.indexOf(j));
-		pw3.println("itteration"+j.itterationlist.toString());
-		pw3.println("Component locations"+j.componentlocation.toString());
-		pw3.println("Subcomponent locations"+j.subcompartmentlocation.toString());
-	}
-	
-}*/
 				pw.close();
 				pw2.close();
-				pw3.close();
 				jf.setVisible(false);
-				
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -339,7 +301,6 @@ public class FrapSimulationWithInternalDiffusion {
 	}
 	
 	public void SplitCompartmentCounter(PrintWriter pw, int nparts) {
-		//#TODO add splitting measurements
 		int[] nmols = new int[nparts*nComps+1];//+1 needed for overflow if division is not perfect integer
 		
 		for (int i=0;i<nmols.length;i++) { // initialize on 0
@@ -385,37 +346,20 @@ public class FrapSimulationWithInternalDiffusion {
 		lostR=0;
 		for (int i=1;i<h.comps.length-1;i++) { // calculates diffusion from compartment 1 to n-1
 			ArrayList<FluorescentMolecule> cm=h.comps[i].fms;
-			ArrayList<ArrayList<FluorescentMolecule>> toChange;
+			ArrayList<FluorescentMolecule> toChange;
 			if (moveL&&i==1) {
 				toChange = diffuseMolecules(cm,nIttD,i,0,difright);
-/*				System.out.println("After 1st compartment diffusion");
-				for (int j=0;j<h.comps.length;j++) {
-					System.out.print(h.comps[j].fms.size()+",");
-				}	
-				System.out.println();*/
 			} else if (moveR &&i==h.comps.length-2) {
 				toChange = diffuseMolecules(cm,nIttD,i,difleft,0);
 			} else {
 				toChange = diffuseMolecules(cm,nIttD,i,difleft,difright);
 			}
-			ArrayList<FluorescentMolecule> toremove=toChange.get(0);
-			ArrayList<FluorescentMolecule> toclean=toChange.get(1);
-			for (FluorescentMolecule deleting:toremove) {
+			for (FluorescentMolecule deleting:toChange) {
 				cm.remove(deleting);
 			}
-			for (int j=0;j<h.comps.length;j++) {
-				for (FluorescentMolecule delfm:toclean) {
-					if (cm.contains(delfm) && (j+1)!=i) { // removes them from the compartments except the currently calculated one, better to not add them
-						cm.remove(delfm);
-					}
-				}
-			}
-			//end up with a cleaned compartment list of molecules
-			//System.out.print(h.comps[i].fms.size()+",");
 		}
 		lostL=h.comps[0].fms.size();
 		lostR=h.comps[h.comps.length-1].fms.size();
-		//System.out.println(lostL+","+lostR+",");
 		h.comps[0].fms=new ArrayList<FluorescentMolecule>(); // resets the diffused out molecules
 		h.comps[h.comps.length-1].fms=new ArrayList<FluorescentMolecule>(); // resets the diffused out molecules right
 		if (refillL) {
@@ -428,9 +372,6 @@ public class FrapSimulationWithInternalDiffusion {
 				h.comps[h.comps.length-2].fms.add(new FluorescentMolecule(h.comps.length-2));
 			}
 		}
-
-
-		//System.out.println();
 	}
 	
 	public ArrayList<FluorescentMolecule> getBleachables(ArrayList<FluorescentMolecule> cm, int startB, int endB){
@@ -449,13 +390,11 @@ public class FrapSimulationWithInternalDiffusion {
 		return toBleach;
 	}
 	
-	public ArrayList<ArrayList<FluorescentMolecule>> diffuseMolecules(ArrayList<FluorescentMolecule> cm, int nIttD, int bc, double difleft, double difright) {
+	public ArrayList<FluorescentMolecule> diffuseMolecules(ArrayList<FluorescentMolecule> cm, int nIttD, int bc, double difleft, double difright) {
 		// We need to simulate diffusion and mark the min and max position
 		// Also if the max position>100 or the min position<0 we need to move it to another compartment based on the difleft, and or difright chances
 		 // needed to move between compartmentds
 		ArrayList<FluorescentMolecule> toremove =new ArrayList<FluorescentMolecule>(); // needed to see which molecules to remove
-		ArrayList<FluorescentMolecule> toclean =new ArrayList<FluorescentMolecule>(); 
-		ArrayList<ArrayList<FluorescentMolecule>> toreturn= new ArrayList<ArrayList<FluorescentMolecule>>();
 		for (FluorescentMolecule fm:cm) {// This diffuses the molecule
 			int cComp=bc;
 			//System.out.println("New molecule");
@@ -465,108 +404,60 @@ public class FrapSimulationWithInternalDiffusion {
 			if (fm.compartment!=bc) {
 				System.out.println(fm.compartment+", "+bc);
 			}
-			if (!fm.diffused) {
-				for (int j=0;j<nIttD;j++) {
-					//System.out.print(fm.position+", ");
-/*if (fm.position>90||fm.position<10) {
-	fm.componentlocation.add(cComp);
-	fm.subcompartmentlocation.add(fm.position);
-	fm.itterationlist.add(j);
-
-}*/
-					if (Math.random()>(diffD/100)) { //move right
-						if (fm.position>90||fm.position<10) {
-							fm.DirectionList.add('R');
-						}
-						fm.position++;
-						if (fm.position>99) {
-							//check if it gets moved right or whether is bounces of the wall
-							if (Math.random()*100<difright) { // it diffuses right over the cell wall
-								//if (cComp+1<h.comps.length) {// checks if it can diffuse right
-									fm.position=0;
-									cmaxpos=0;
-									cminpos=0;
-									//System.out.println("Trying right "+j+", "+fm.toString());
-/*									if (!h.comps[cComp+1].fms.contains(fm)) {
-										//System.out.println((cComp+1)+" Does not contain "+fm.toString());
-										h.comps[cComp+1].fms.add(fm); //moves it to the start of the next compartment
-									} 
-									// Does not work, add it to a remove list, which will be removed later on. h.comps[cComp].fms.remove(fm); //removes it from the active compartment
-	completely removed so we only add to other components at the end
-	and remove as well. This removes the need to clean
-									if(!toremove.contains(fm)) {	
-										toremove.add(fm);
-									}
-*/
-									cComp++;;
-									fm.compartment++;
-								} else { // it bounced
-									fm.position-=2;//bounced so it moves back to position 99
-								} 
-							//} 
-						}
-						if (fm.position>cmaxpos && cComp==bc) { 
-							cmaxpos=fm.position;
-							fm.maxPos=cmaxpos;						
-						}
-					} else { //move left
-						if (fm.position>90||fm.position<10) {
-							fm.DirectionList.add('L');
-						}
-	
-						fm.position--;
-						if (fm.position<0) {
-							//check if it gets moved right or whether is bounces of the wall
-							if (Math.random()*100<difleft) {
-								//if (cComp-1>=0) {// checks if it can diffuse left
-									fm.position=99; 
-									cmaxpos=99;
-									cminpos=99;
-									//System.out.println("Trying left "+j+", "+fm.toString());
-/*									if (!h.comps[cComp-1].fms.contains(fm)) {
-										//System.out.println((cComp-1)+" Does not contain "+fm.toString());
-										h.comps[cComp-1].fms.add(fm); //moves it to the start of the next compartment
-										//moves it to the start of the next compartment
-									} else {
-										//System.out.println((cComp-1)+" Does contain "+fm.toString());
-									} 
-									if(!toremove.contains(fm)) {	
-										toremove.add(fm);
-									}
-*/									//h.comps[cComp].fms.remove(fm); //removes it from the active 
-									cComp--;
-									fm.compartment--;
-								}else {
-									fm.position+=2;//bounced so it moves back to position 1
-								} 
-							//} 
-						}  
-						if (fm.position<cminpos &&cComp==bc) {
-							cminpos=fm.position;
-							fm.minPos=cminpos;
-						}
+			for (int j=0;j<nIttD;j++) {
+				if (Math.random()>(diffD/100)) { //move right
+					fm.position++;
+					if (fm.position>99) {
+						//check if it gets moved right or whether is bounces of the wall
+						if (Math.random()*100<difright) { // it diffuses right over the cell wall
+							fm.position=0;
+							cmaxpos=0;
+							cminpos=0;
+							cComp++;;
+							fm.compartment++;
+						} else { // it bounced
+							fm.position-=2;//bounced so it moves back to position 99
+						} 
 					}
-	
+					if (fm.position>cmaxpos && cComp==bc) { 
+						cmaxpos=fm.position;
+						fm.maxPos=cmaxpos;						
+					}
+				} else { //move left
+					fm.position--;
+					if (fm.position<0) {
+						//check if it gets moved right or whether is bounces of the wall
+						if (Math.random()*100<difleft) {
+							fm.position=99; 
+							cmaxpos=99;
+							cminpos=99;
+							cComp--;
+							fm.compartment--;
+						}else {
+							fm.position+=2;//bounced so it moves back to position 1
+						} 
+					}  
+					if (fm.position<cminpos &&cComp==bc) {
+						cminpos=fm.position;
+						fm.minPos=cminpos;
+					}
 				}
+			}
 			//done checking the molecule
 			// the compartment position was added to the molecule, so if the current compartment position == bc
-			fm.diffused=true;
-			
 			//if (cComp==bc) { // this means it moved back or stayed in to the original compartment nothing needs to be done
 			if (cComp!=bc) {
 				// need to remove, so clean list
 				if (!toremove.contains(fm)) { //check if it is already in there
+					//System.out.println("DOing this" +cm.indexOf(fm));
 					toremove.add(fm); // add it to the remove list
+					
 				}
 				// This also means we need to add it to the new compartments
 				h.comps[cComp].fms.add(fm);
 			}
-			}
-			//System.out.println("maxpos"+ fm.maxPos+", minpos"+fm.minPos);
 		}
-		toreturn.add(toremove);
-		toreturn.add(toclean);
-		return toreturn;
+		return toremove;
 	}
 
 }
