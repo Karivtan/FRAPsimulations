@@ -2,6 +2,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -22,6 +24,8 @@ public class FrapSimulationWithInternalDiffusion {
 	boolean diffBleach, refillL, refillR, moveL, moveR;
 	String title;
 	File f;
+	int [] posHist= new int[100];
+	int [] LR = new int[2];
 	
 	public static void main(String[] args) {
 		// eventueel grootte/lengte hyphae
@@ -29,6 +33,9 @@ public class FrapSimulationWithInternalDiffusion {
 		// andere deeltjes in hyphae
 		// first create a hyphae
 		FrapSimulationWithInternalDiffusion fs = new FrapSimulationWithInternalDiffusion();
+		for (int i=0;i<100;i++) {
+			fs.posHist[i]=0;
+		}
 		JTextField titleF = new JTextField("Frap");
 		JTextField nMolsF = new JTextField("1000");
 		JTextField nCompsF = new JTextField("5");
@@ -114,10 +121,12 @@ public class FrapSimulationWithInternalDiffusion {
 		h = new Hyphae(ncomp,nmol); // creates new hyphae with 2 empty compartments on each side
 	}
 	
-	public void Bleach (int BleachedCompartment, int nBleaches, int startB, int endB, int nIttD, boolean diffB, double difledft, double difright) {
+	public void Bleach (int BleachedCompartment, int nBleaches, int startB, int endB, int nIttD, boolean diffB, double difleft, double difright) {
 		Compartment bc = h.comps[BleachedCompartment]; // select the bleached compartment
 		ArrayList<FluorescentMolecule> CompartmentMolecules = bc.fms; // get the molecules in there
 		int nToBleach=nMols*nBleaches/100; // needed to stop the bleach when we also diffuse
+		
+			
 		if (!diffB) {
 			ArrayList<FluorescentMolecule> ListToBleach = new ArrayList<FluorescentMolecule>();
 			for (FluorescentMolecule i: CompartmentMolecules) { // go through all molecules in the compartment
@@ -181,13 +190,9 @@ public class FrapSimulationWithInternalDiffusion {
 					pb.setValue(i+1);
 					diffuseCycle(); 
 					pw.print((i+1)+",");
+					pw2.print((i+1)+",");
 					MoleculeCounter(pw);
 					SplitCompartmentCounter(pw2,nSubComp);
-					/*
-					for (int j=0;j<h.comps.length;j++) {
-						System.out.print(h.comps[j].fms.size()+",");
-					}
-					System.out.println();*/
 				}
 				pw.close();
 				pw2.close();
@@ -197,7 +202,6 @@ public class FrapSimulationWithInternalDiffusion {
 				e.printStackTrace();
 			}
 		} else {
-			System.out.println(""+diffD);
 			//Only molecules that have been in the bleach area can be bleached, so we need to register max and min positions for every molecule
 			//So we let them diffuse first, and then bleach away nBleaches/100 percent of the molecules that are in the compartment
 			ArrayList<FluorescentMolecule> toremove=diffuseMolecules(CompartmentMolecules, nIttD, BleachedCompartment, difleft, difright);
@@ -279,17 +283,23 @@ public class FrapSimulationWithInternalDiffusion {
 				
 				for (int i=0;i<nItterations;i++) {
 					pb.setValue(i+1);
-					diffuseCycle(); 
-/*					for (int j=0;j<h.comps.length;j++) { // resets all the molecules to be able to diffuse for the next round
-						ArrayList<FluorescentMolecule> fms =h.comps[j].fms;
-						for (FluorescentMolecule fm:fms) {
-							fm.diffused=false;
+					for (int k=0;k<100;k++) {
+						posHist[k]=0;
+					}
+					for (int k=1;k<h.comps.length-1;k++) {
+						ArrayList<FluorescentMolecule> fms = h.comps[k].fms;
+						for (FluorescentMolecule counting:fms) {
+							posHist[counting.position]+=1;
 						}
-					}*/
+					}
+					diffuseCycle(); 
 					pw.print((i+1)+",");
 					MoleculeCounter(pw);
 					pw2.print((i+1)+",");
 					SplitCompartmentCounter(pw2,nSubComp);
+					
+					
+					
 				}
 				pw.close();
 				pw2.close();
@@ -298,6 +308,7 @@ public class FrapSimulationWithInternalDiffusion {
 				e.printStackTrace();
 			}
 		}
+	
 	}
 	
 	public void SplitCompartmentCounter(PrintWriter pw, int nparts) {
@@ -309,16 +320,17 @@ public class FrapSimulationWithInternalDiffusion {
 		for (int i=1;i<h.comps.length-1;i++) {
 			ArrayList<FluorescentMolecule> cm=h.comps[i].fms;
 			for (FluorescentMolecule counting:cm) {
+				
 				if (counting.bleached==0) {
 					// say it is 100 big then every 20 if five
 					// say is is 100 big then every 25 if 4
-				//	System.out.println(counting.position+","+counting.position/(100/nparts)+","+nmols[counting.position/(100/nparts)]+",");
 					nmols[counting.position/(100/nparts)+(i-1)*nparts]+=1;
+					// counting.position is between 0 and 99, with 5C it gets divided by 20
+					
 				}
 			}
 			//end up with a cleaned compartment list of molecules
 		}
-		//System.out.println(Arrays.toString(nmols));
 		for (int i=0;i<nmols.length;i++) { // initialize on 0
 			pw.print(nmols[i]+", ");
 		}
@@ -362,6 +374,15 @@ public class FrapSimulationWithInternalDiffusion {
 		lostR=h.comps[h.comps.length-1].fms.size();
 		h.comps[0].fms=new ArrayList<FluorescentMolecule>(); // resets the diffused out molecules
 		h.comps[h.comps.length-1].fms=new ArrayList<FluorescentMolecule>(); // resets the diffused out molecules right
+		
+		for (int i=1;i<h.comps.length-1;i++) { // calculates diffusion from compartment 1 to n-1
+			ArrayList<FluorescentMolecule> cm=h.comps[i].fms;
+			for (FluorescentMolecule fm:cm) {
+				fm.diffused=false;
+			}
+		}
+		
+		
 		if (refillL) {
 			for (int i=0;i<lostR;i++) {
 				h.comps[1].fms.add(new FluorescentMolecule(1));
@@ -393,68 +414,66 @@ public class FrapSimulationWithInternalDiffusion {
 	public ArrayList<FluorescentMolecule> diffuseMolecules(ArrayList<FluorescentMolecule> cm, int nIttD, int bc, double difleft, double difright) {
 		// We need to simulate diffusion and mark the min and max position
 		// Also if the max position>100 or the min position<0 we need to move it to another compartment based on the difleft, and or difright chances
-		 // needed to move between compartmentds
+		 // needed to move between compartments
 		ArrayList<FluorescentMolecule> toremove =new ArrayList<FluorescentMolecule>(); // needed to see which molecules to remove
 		for (FluorescentMolecule fm:cm) {// This diffuses the molecule
-			int cComp=bc;
-			//System.out.println("New molecule");
 			int cminpos=fm.position; // if at any time during diffusion the molecule is in this region, it can be bleached
 			int cmaxpos=fm.position;
-			cComp=bc;
-			if (fm.compartment!=bc) {
-				System.out.println(fm.compartment+", "+bc);
-			}
-			for (int j=0;j<nIttD;j++) {
-				if (Math.random()>(diffD/100)) { //move right
-					fm.position++;
-					if (fm.position>99) {
-						//check if it gets moved right or whether is bounces of the wall
-						if (Math.random()*100<difright) { // it diffuses right over the cell wall
-							fm.position=0;
-							cmaxpos=0;
-							cminpos=0;
-							cComp++;;
-							fm.compartment++;
-						} else { // it bounced
-							fm.position-=2;//bounced so it moves back to position 99
-						} 
-					}
-					if (fm.position>cmaxpos && cComp==bc) { 
-						cmaxpos=fm.position;
-						fm.maxPos=cmaxpos;						
-					}
-				} else { //move left
-					fm.position--;
-					if (fm.position<0) {
-						//check if it gets moved right or whether is bounces of the wall
-						if (Math.random()*100<difleft) {
-							fm.position=99; 
-							cmaxpos=99;
-							cminpos=99;
-							cComp--;
-							fm.compartment--;
-						}else {
-							fm.position+=2;//bounced so it moves back to position 1
-						} 
-					}  
-					if (fm.position<cminpos &&cComp==bc) {
-						cminpos=fm.position;
-						fm.minPos=cminpos;
+			if(!fm.diffused) { // needed to prevent double diffusion which creates a bias to the left
+				for (int j=0;j<nIttD;j++) {
+					if (Math.random()<(diffD/100)) { //move left
+						fm.position--;
+						if (fm.position<0) {
+							//check if it gets moved right or whether is bounces of the wall
+							if (Math.random()*100<difleft) {
+								fm.position=99; 
+								cmaxpos=99;
+								cminpos=99;
+								fm.compartment--;
+							} else {
+								fm.position=1;//bounced so it moves back to position 1
+							} 
+						}  
+						if (fm.position<cminpos &&fm.compartment==bc) {
+							cminpos=fm.position;
+							fm.minPos=cminpos;
+						}
+						
+					} else { //move right
+						fm.position++;
+						if (fm.position>99) {
+							//check if it gets moved right or whether is bounces of the wall
+							if (Math.random()*100<difright) { // it diffuses right over the cell wall
+								fm.position=0;
+								cmaxpos=0;
+								cminpos=0;
+								fm.compartment++;
+							} else { // it bounced
+								fm.position=98;//bounced so it moves back to position 98
+							} 
+						}
+						if (fm.position>cmaxpos && fm.compartment==bc) { 
+							cmaxpos=fm.position;
+							fm.maxPos=cmaxpos;						
+						}
 					}
 				}
-			}
-			//done checking the molecule
-			// the compartment position was added to the molecule, so if the current compartment position == bc
-			//if (cComp==bc) { // this means it moved back or stayed in to the original compartment nothing needs to be done
-			if (cComp!=bc) {
-				// need to remove, so clean list
-				if (!toremove.contains(fm)) { //check if it is already in there
-					//System.out.println("DOing this" +cm.indexOf(fm));
+				//done checking the molecule
+				// the compartment position was added to the molecule, so if the current compartment position == bc
+				//if (cComp==bc) { // this means it moved back or stayed in to the original compartment nothing needs to be done
+				if (fm.compartment!=bc) {
+					//fm.compartment always equals cComp
+					// need to remove, so clean list
 					toremove.add(fm); // add it to the remove list
-					
+					// This also means we need to add it to the new compartments
+					h.comps[fm.compartment].fms.add(fm);
+					if (fm.compartment>bc) { // this shows there is a lot more moving left than right.
+						LR[1]+=1;
+					} else {
+						LR[0]+=1;
+					}
 				}
-				// This also means we need to add it to the new compartments
-				h.comps[cComp].fms.add(fm);
+				fm.diffused=true;
 			}
 		}
 		return toremove;
