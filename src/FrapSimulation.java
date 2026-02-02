@@ -7,7 +7,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 @Deprecated
-
+// No longer needed
 public class FrapSimulation {
 
 	Hyphae h;
