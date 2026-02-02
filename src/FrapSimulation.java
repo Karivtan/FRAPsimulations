@@ -81,7 +81,7 @@ public class FrapSimulation {
 	}
 	
 	public void createHyphae(int ncomp, int nmol) {
-		h = new Hyphae(ncomp,nmol);
+		h = new Hyphae(ncomp,nmol,100);
 	}
 	
 	public void Bleach (int BleachedCompartment, int nBleaches) {
@@ -151,7 +151,7 @@ public class FrapSimulation {
 			//fix compartment 0
 			ArrayList<FluorescentMolecule> ML= h.comps[0].fms;
 			for (int l=0;l<difright-difleft;l++) {
-				ML.add(new FluorescentMolecule(0));
+				ML.add(new FluorescentMolecule(0,100));
 			}
 			// fix end compartment
 			ML= h.comps[h.comps.length-1].fms;
