@@ -26,7 +26,7 @@ import ij.measure.CurveFitter;
 public class FrapSimulationWithInternalDiffusion {
 
 	Hyphae h;
-	int startB, endB, bleachedCompartment, nMols, nComps, nBleached,nItterations, nIttD, lostL, lostR, nSubComp, CompLength, lambdaL, lambdaR;
+	int startB, endB, bleachedCompartment, nMols, nComps, nBleached,nItterations, nIttD, lostL, lostR, nSubComp, CompLength, lambdaL, lambdaR, nIttB;
 	double diffD, difright, difleft;
 	boolean diffBleach, refillL, refillR, moveL, moveR, refillLL, refillRR, refillLF, refillRF;
 	String title;
@@ -58,6 +58,7 @@ public class FrapSimulationWithInternalDiffusion {
 		    this.nBleached = nBleached;
 		    this.nItterations = nItterations;
 		    this.nIttD = nIttD;
+		    this.nIttB=nIttB;
 		    
 		    // Diffusion and Boundary Logic
 		    this.diffD = diffD;
@@ -100,6 +101,7 @@ public class FrapSimulationWithInternalDiffusion {
 		JTextField nBleachedF = new JTextField("100");
 		JTextField nIttF = new JTextField("200");
 		JTextField nIttD = new JTextField("100");
+		JTextField nIttB = new JTextField("100");
 		JTextField difLeftF = new JTextField("50");
 		JTextField difRightF = new JTextField("50");
 		JTextField nSubCompF = new JTextField("3");
@@ -142,7 +144,8 @@ public class FrapSimulationWithInternalDiffusion {
 				"Chance of molecules diffusing to the left", diffDF,
 				"Percentage of molecules in the compartment are bleached", nBleachedF,
 				"Number of measurement itterations", nIttF,
-				"Per how many itterations a measurement is performed", nIttD,
+				"Per how many diffusion itterations a measurement is performed", nIttD,
+				"How many diffusion itterations occur during bleaching", nIttB,
 				"Chance to diffuse to left compartment", difLeftF,
 				"Chance to diffuse to right compartment", difRightF,
 				diffB,
@@ -165,6 +168,7 @@ public class FrapSimulationWithInternalDiffusion {
 			fs.nBleached=Integer.parseInt(nBleachedF.getText());
 			fs.nItterations=Integer.parseInt(nIttF.getText());
 			fs.nIttD=Integer.parseInt(nIttD.getText());
+			fs.nIttB=Integer.parseInt(nIttB.getText());
 			fs.difleft=Double.parseDouble(difLeftF.getText());
 			fs.difright=Double.parseDouble(difRightF.getText());
 			fs.startB=Integer.parseInt(startB.getText());
@@ -189,7 +193,7 @@ public class FrapSimulationWithInternalDiffusion {
 		fs.createHyphae(fs.nComps,fs.nMols);//this is still fine
 		/*+1 on bleachedcompartments needed since we need to bleach one compartment further than actually indicated because of the 2 additional compartments*/
 		System.out.println("Starting");
-		fs.Bleach(fs.bleachedCompartment+1 , fs.nBleached,fs.startB,fs.endB, fs.nIttD, fs.diffBleach, fs.difleft, fs.difright);// we still need to bleach, however we need to consider the position
+		fs.Bleach(fs.bleachedCompartment+1 , fs.nBleached,fs.startB,fs.endB, fs.nIttB, fs.diffBleach, fs.difleft, fs.difright);// we still need to bleach, however we need to consider the position
 		System.out.println("Done");
 	}
 	
@@ -197,7 +201,7 @@ public class FrapSimulationWithInternalDiffusion {
 		h = new Hyphae(ncomp,nmol,CompLength); // creates new hyphae with 2 empty compartments on each side
 	}
 	
-	public void Bleach (int BleachedCompartment, int nBleaches, int startB, int endB, int nIttD, boolean diffB, double difleft, double difright) { // this does the actual experiment
+	public void Bleach (int BleachedCompartment, int nBleaches, int startB, int endB, int nIttB, boolean diffB, double difleft, double difright) { // this does the actual experiment
 		Compartment bc = h.comps[BleachedCompartment]; // select the bleached compartment
 		ArrayList<FluorescentMolecule> CompartmentMolecules = bc.fms; // get the molecules in there
 		int nToBleach=nMols*nBleaches/100; // needed to stop the bleach when we also diffuse, calculates how many molecules to bleach in total
@@ -239,6 +243,7 @@ public class FrapSimulationWithInternalDiffusion {
 				pw.println("Percentage of molecules in the compartment are bleached,"+nBleached);
 				pw.println("Number of measurement itterations,"+nItterations);
 				pw.println("Number of diffusion itterations per measurement itteration,"+nIttD);
+				pw.println("Number of diffusion itterations during the bleach,"+nIttB);
 				pw.println("Chance of molecules diffusing to the left,"+diffD);
 				pw.println("Chance to diffuse to left compartment,"+difleft);
 				pw.println("Chance to diffuse to right compartment,"+difright);
@@ -338,7 +343,7 @@ public class FrapSimulationWithInternalDiffusion {
 				pw.println("Chance of molecules diffusing to the left,"+diffD);
 				pw.println("Number of measurement itterations,"+nItterations);
 				pw.println("Number of diffusion itterations per measurement itteration,"+nIttD);
-				
+				pw.println("Number of diffusion itterations during the bleach,"+nIttB);
 				pw.println("Chance to diffuse left,"+difleft);
 				pw.println("Chance to diffuse right,"+difright);
 				pw.println("Refill molecules lost on the right from the left,"+refillL);
@@ -646,11 +651,11 @@ public class FrapSimulationWithInternalDiffusion {
 			ArrayList<FluorescentMolecule> cm=h.comps[i].fms;
 			ArrayList<FluorescentMolecule> toChange;
 			if (moveL&&i==1) { // here we need to change to bleachMolecules, can be a different number of cycles
-				toChange = bleachMolecules(cm,nIttD,i,0,difright);
+				toChange = bleachMolecules(cm,nIttB,i,0,difright);
 			} else if (moveR &&i==h.comps.length-2) {
-				toChange = bleachMolecules(cm,nIttD,i,difleft,0);
+				toChange = bleachMolecules(cm,nIttB,i,difleft,0);
 			} else {
-				toChange = bleachMolecules(cm,nIttD,i,difleft,difright);
+				toChange = bleachMolecules(cm,nIttB,i,difleft,difright);
 			}
 			for (FluorescentMolecule deleting:toChange) {
 				cm.remove(deleting); // remove all overflown molecules

@@ -16,8 +16,8 @@ public class SimulatorRunner {
 		int [] lengths = new int[] {10,25,50,100,500};
 
 		FrapSimulationWithInternalDiffusion fs = new FrapSimulationWithInternalDiffusion();
-	    //fs.f = new File("E:\\Owncloud\\IBL_Streptomyces_cell_division (Projectfolder)\\Diffusion kinetics\\Simulations\\PassChances\\Detailedv3");
-		fs.f = new File("C:/Users/joost/ownCloud - Joost Willemse@universiteitleiden.data.surfsara.nl (2)/IBL_Streptomyces_cell_division (Projectfolder)/Diffusion kinetics/Simulations/BleachRegion");
+	    fs.f = new File("E:\\Owncloud\\IBL_Streptomyces_cell_division (Projectfolder)\\Diffusion kinetics\\Simulations\\PassChances\\Detailedv3");
+		//fs.f = new File("C:/Users/joost/ownCloud - Joost Willemse@universiteitleiden.data.surfsara.nl (2)/IBL_Streptomyces_cell_division (Projectfolder)/Diffusion kinetics/Simulations/BleachRegion");
 		for (int a:comps) { // loop through number of compartments 2
 			for (int [] b:bleachReg) { //loop through number of percentages 28
 				//for (int c=1;c<a;c++) { // loop through different bleach compartments 3+5=8
