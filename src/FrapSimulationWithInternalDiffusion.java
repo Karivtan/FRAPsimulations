@@ -1,3 +1,5 @@
+import java.awt.Component;
+import java.awt.Dimension;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -13,6 +15,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -132,6 +135,11 @@ public class FrapSimulationWithInternalDiffusion {
 			JOptionPane.showMessageDialog(null, "No place to store data, quitting program");
 			return;
 		}
+		JPanel container = new JPanel();
+		container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+		
+		
+		
 		Object [] message = {
 				"What should be the filename without extension", titleF,
 				"Number of molecules per compartment", nMolsF,
@@ -158,7 +166,20 @@ public class FrapSimulationWithInternalDiffusion {
 				moveL,
 				moveR,
 		};
-		int option =JOptionPane.showConfirmDialog(null, message, "Enter FRAP settings", JOptionPane.OK_CANCEL_OPTION);
+		
+		for (Object obj : message) {
+		    if (obj instanceof Component) {
+		        container.add((Component) obj);
+		    } else {
+		        container.add(new JLabel(obj.toString()));
+		    }
+		}
+		
+		JScrollPane scrollPane = new JScrollPane(container);
+		scrollPane.setPreferredSize(new Dimension(800, 600)); // Width, Height
+		scrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smooth scrolling
+		
+		int option =JOptionPane.showConfirmDialog(null, scrollPane, "Enter FRAP settings", JOptionPane.OK_CANCEL_OPTION);
 		if (option== JOptionPane.OK_OPTION) {
 			fs.title=titleF.getText();
 			fs.nMols=Integer.parseInt(nMolsF.getText());

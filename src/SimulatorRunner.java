@@ -14,30 +14,31 @@ public class SimulatorRunner {
 		boolean [] RefillArL = new boolean [] {false, true, true};
 		boolean [] RefillArR = new boolean [] {false, false, true};
 		int [] lengths = new int[] {10,25,50,100,500};
+		int [] bleachItt=new int[] {1,2,5,10,20,50,100,200};
 
 		FrapSimulationWithInternalDiffusion fs = new FrapSimulationWithInternalDiffusion();
-	    fs.f = new File("E:\\Owncloud\\IBL_Streptomyces_cell_division (Projectfolder)\\Diffusion kinetics\\Simulations\\PassChances\\Detailedv3");
+	    fs.f = new File("E:\\Owncloud\\IBL_Streptomyces_cell_division (Projectfolder)\\Diffusion kinetics\\Simulations\\BleachItterations\\MultiShort");
 		//fs.f = new File("C:/Users/joost/ownCloud - Joost Willemse@universiteitleiden.data.surfsara.nl (2)/IBL_Streptomyces_cell_division (Projectfolder)/Diffusion kinetics/Simulations/BleachRegion");
-		for (int a:comps) { // loop through number of compartments 2
-			for (int [] b:bleachReg) { //loop through number of percentages 28
+		for (int a:bleachItt) { // loop through number of compartments 2
+			for (int b=0;b<5;b++) { //loop through number of percentages 28
 				//for (int c=1;c<a;c++) { // loop through different bleach compartments 3+5=8
 
-					fs.title ="FRAP_AbsMols_C"+a+"_Bleach_S"+b[0]+"_E"+b[1]+"_BC"+a/2;
+					fs.title ="FRAP_AbsMols_BItt"+a+"_"+b;
 				    fs.nMols = 4000;
 				    fs.nSubComp = 3;
 				    fs.CompLength = 100;
-				    fs.startB=b[0];
-				    fs.endB=b[1];
+				    fs.startB=34;
+				    fs.endB=67;
 				    fs.nBleached = 100;
 				    fs.nItterations = 200;
-				    fs.nIttD = 100;
-				    
+				    fs.nIttD = 10;
+				    fs.nIttB=a;
 				    //variable in loops
-				    fs.nComps = a;
+				    fs.nComps = 5;
 				    fs.diffD = 50;
 				    fs.difleft = 50;
 				    fs.difright = 50;
-				    fs.bleachedCompartment = a/2;
+				    fs.bleachedCompartment = 3;
 				    
 				    // Diffusion and Boundary Logic
 				    fs.diffBleach = true;
